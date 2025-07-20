@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin: Upload 3D Model</title>
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body class="<%= userTheme === 'dark' ? 'dark' : '' %>">
+  <%- include('partials/header') %>
+
+  <main class="container">
+    <h1>🛠️ Admin: Upload 3D Model</h1>
+
+    <% if (error) { %>
+    <div class="error-message"><%= error %></div>
+    <% } %>
+    <% if (success) { %>
+    <div class="success-message"><%= success %></div>
+    <% } %>
+
+    <div class="admin-grid"> <%-- NEW CLASS for layout --%>
+      <div class="admin-left-col"> <%-- NEW CLASS --%>
+        <form action="/admin/upload" method="POST" enctype="multipart/form-data" class="model-form"> <%-- Reused class --%>
+          <label>📁 Upload GLB File(s):</label>
+          <input type="file" name="models" accept=".glb" multiple required />
+
+          <label>📝 Name (for all files):</label>
+          <input type="text" name="name" placeholder="Model name (optional)" />
+
+          <label>🖋️ Tags (comma-separated for all files):</label>
+          <input type="text" name="tags" placeholder="Comma-separated tags (optional)" />
+
+          <div class="button-row">
+            <button type="submit">💾 Save</button>
+          </div>
+        </form>
+
+        <h2>📂 All Uploaded Models (<%= totalModels %> total)</h2>
+        <div class="model-table-container"> <%-- Reused class --%>
+          <% if (uploadedModels.length > 0) { %>
+            <table class="model-table"> <%-- Reused class --%>
+              <thead>
+                <tr>
+                  <th>Thumbnail</th>
+                  <th>Name</th>
+                  <th>Filename</th>
+                  <th>Tags</th>
+                  <th>Live</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% uploadedModels.forEach(model => { %>
+                  <tr>
+                    <td>
+                      <% if (model.thumbnailPath) { %>
+                        <img src="<%= baseUrl %>/uploads/<%= model.thumbnailPath %>" alt="Thumbnail of <%= model.name %>" class="thumbnail" />
+                      <% } else { %>
+                        <span>No Thumb</span>
+                      <% } %>
+                    </td>
+                    <td><%= model.name %></td>
+                    <td><%= model.filename %></td>
+                    <td><%= model.tags.join(', ') %></td>
+                    <td><%= model.isLive ? '✅ Yes' : '❌ No' %></td>
+                    <td>
+                      <div class="button-row-actions"> <%-- Reused class --%>
+                        <a href="<%= baseUrl %>/viewer?model=<%= model.username %>/<%= model.filename %>" target="_blank" class="button">👁️ View</a>
+                        <%-- Admin should preview by filename not ID since it's the identifier --%>
+                        <a href="/admin?filename=<%= model.filename %>" class="button edit-button">📦 Preview</a>
+                        <form action="/admin/push-live" method="POST" class="inline-form"> <%-- NEW CLASS --%>
+                          <input type="hidden" name="filename" value="<%= model.filename %>" />
+                          <button type="submit" <%= model.isLive ? 'disabled' : '' %>>🚀 Push Live</button>
+                        </form>
+                        <form action="/admin/delete" method="POST" class="inline-form"> <%-- NEW CLASS --%>
+                          <input type="hidden" name="filename" value="<%= model.filename %>" />
+                          <button type="submit" class="button delete-button" onclick="return confirm('Are you sure you want to delete <%= model.name %>?');">🗑️ Delete</button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+
+            <div class="pagination-controls"> <%-- Reused class --%>
+              <% if (currentPage > 1) { %>
+                <a href="/admin?page=<%= currentPage - 1 %>&limit=<%= limit %>" class="pagination-button">Previous</a>
+              <% } %>
+
+              <% for (let i = 1; i <= totalPages; i++) { %>
+                <a href="/admin?page=<%= i %>&limit=<%= limit %>" class="pagination-button <%= i === currentPage ? 'active' : '' %>"><%= i %></a>
+              <% } %>
+
+              <% if (currentPage < totalPages) { %>
+                <a href="/admin?page=<%= currentPage + 1 %>&limit=<%= limit %>" class="pagination-button">Next</a>
+              <% } %>
+            </div>
+
+          <% } else { %>
+            <p>No models uploaded yet.</p>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="admin-right-col"> <%-- NEW CLASS --%>
+        <% if (model) { %>
+          <div class="model-preview-section"> <%-- NEW CLASS --%>
+            <h2>📦 Preview: <%= model.name %></h2>
+            <strong>Tags:</strong> <%= model.tags.join(", ") %><br/>
+            <strong>Filename:</strong> <%= model.filename %><br/><br/>
+            <strong>Uploaded by:</strong> <%= model.username %><br/><br/>
+
+            <strong>Embed Code:</strong>
+            <pre>&lt;model-viewer src="<%= baseUrl %>/uploads/<%= model.username %>/<%= model.filename %>" auto-rotate camera-controls&gt;&lt;/model-viewer&gt;</pre>
+
+            <model-viewer
+              src="<%= baseUrl %>/uploads/<%= model.username %>/<%= model.filename %>"
+              alt="Preview of <%= model.name %>"
+              auto-rotate
+              camera-controls
+              loading="eager"
+              shadow-intensity="1">
+            </model-viewer>
+
+            <form action="/admin/push-live" method="POST" class="button-row mt-10"> <%-- Added mt-10 class --%>
+              <input type="hidden" name="filename" value="<%= model.filename %>" />
+              <button type="submit" <%= model.isLive ? 'disabled' : '' %>>🚀 Push Live</button>
+            </form>
+            <form action="/admin/delete" method="POST" class="button-row mt-10"> <%-- Reused class, added mt-10 --%>
+              <input type="hidden" name="filename" value="<%= model.filename %>" />
+              <button type="submit" class="button delete-button" onclick="return confirm('Are you sure you want to delete <%= model.name %>?');">🗑️ Delete</button>
+            </form>
+          </div>
+        <% } else { %>
+          <p>Select a model from the list to preview.</p>
+        <% } %>
+
+        <div class="download-section mt-20"> <%-- Reused class, added mt-20 --%>
+          <h3>⬇️ Download Live Models Configuration</h3>
+          <p>Generate a JSON file with embed codes and details for all models marked as "Live".</p>
+          <a href="/admin/download-live-models" class="button download-button">⬇️ Download Live Models JSON</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <%- include('partials/footer') %>
+
+  <script src="/js/theme-toggle.js"></script> <%-- All theme logic consolidated here --%>
+</body>
+</html>

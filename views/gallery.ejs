@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D Model Gallery</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script
+      type="module"
+      src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"
+    ></script>
+    <script
+      nomodule
+      src="https://unpkg.com/@google/model-viewer/dist/model-viewer-legacy.js"
+    ></script>
+  </head>
+  <body class="<%= user && user.theme === 'dark' ? 'dark' : '' %>">
+    <%- include('partials/header') %>
+
+    <main class="container">
+      <h1>Public 3D Model Gallery</h1>
+
+      <div class="gallery-controls">
+        <form action="/gallery" method="GET" class="search-form">
+          <input
+            type="text"
+            name="search"
+            placeholder="Search by name..."
+            value="<%= currentSearch %>"
+          />
+          <input
+            type="text"
+            name="tags"
+            placeholder="Filter by tags (comma-separated)..."
+            value="<%= currentTags %>"
+          />
+          <button type="submit" class="button">Search / Filter</button>
+          <% if (currentSearch || currentTags) { %>
+          <a href="/gallery" class="button reset-button">Reset Filters</a>
+          <% } %>
+        </form>
+      </div>
+
+      <% if (models.length > 0) { %>
+      <div class="model-grid">
+        <% models.forEach(model => { %>
+        <div class="model-card">
+          <h2><%= model.name %></h2>
+          <div class="model-viewer-container">
+            <model-viewer
+              src="<%= baseUrl %>/uploads/<%= model.filePath %>"
+              ar
+              ar-modes="webxr scene-viewer quick-look"
+              camera-controls
+              shadow-intensity="1"
+              environment-image="neutral"
+              poster="/images/placeholder.webp"
+              alt="<%= model.name %> 3D model"
+              auto-rotate
+            ></model-viewer>
+          </div>
+          <% if (model.tags.length > 0) { %>
+          <p class="model-tags">Tags: <%= model.tags.join(', ') %></p>
+          <% } %>
+          <p class="model-uploaded-by">Uploaded by: <%= model.username %></p>
+          <a
+            href="/viewer?model=<%= model.username %>/<%= model.filename %>"
+            class="button"
+            >View Model</a
+          >
+        </div>
+        <% }); %>
+      </div>
+      <% } else { %>
+      <p class="text-center">No live models found matching your criteria.</p>
+      <% } %>
+    </main>
+
+    <%- include('partials/footer') %>
+
+    <script src="/js/theme-toggle.js"></script>
+  </body>
+</html>

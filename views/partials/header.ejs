@@ -1,0 +1,24 @@
+<header class="topbar">
+  <div class="user-info">
+    <% if (user) { %> Welcome, <strong><%= user.username %></strong>! <% } else
+    { %> Universal 3D Viewer <% } %>
+  </div>
+  <nav>
+    <ul class="nav-links">
+      <li><a href="/">Home</a></li>
+      <li><a href="/gallery">Gallery</a></li>
+      <% if (user) { %>
+      <li><a href="/dashboard">Dashboard</a></li>
+      <li><a href="/upload">Upload</a></li>
+      <li><a href="/logout">Logout</a></li>
+      <% } else { %>
+      <li><a href="/login">Login</a></li>
+      <% } %>
+    </ul>
+  </nav>
+  <% if (user) { %>
+  <button class="theme-toggle-btn" onclick="toggleTheme()">
+    <% if (user.theme === 'dark') { %> ☀️ <% } else { %> 🌙 <% } %>
+  </button>
+  <% } %>
+</header>

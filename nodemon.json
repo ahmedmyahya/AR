@@ -1,0 +1,11 @@
+{
+    "ignore": [
+        "models.json",
+        "users.json",
+        "sessions/",
+        "public/uploads/",
+        "public/uploads/*/thumbnails/",
+        ".env",
+        "database/data/*.sqlite"
+    ]
+}

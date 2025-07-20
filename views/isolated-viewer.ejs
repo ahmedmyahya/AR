@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Isolated 3D Viewer for Thumbnail</title>
+    <script
+      type="module"
+      src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"
+    ></script>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden; /* Hide scrollbars */
+        background: transparent; /* Allow transparent background for screenshots */
+      }
+      model-viewer {
+        width: 100vw;
+        height: 100vh;
+        /* Custom properties for model-viewer for cleaner screenshots */
+        --progress-bar-color: transparent;
+        --poster-color: transparent;
+      }
+    </style>
+  </head>
+  <body>
+    <% // model path from query param: e.g., "username/filename.glb" const
+    modelFile = model || 'default.glb'; // Fallback if no model is provided %>
+    <model-viewer
+      src="/uploads/<%= modelFile %>"
+      alt="3D model thumbnail"
+      exposure="1"
+      camera-controls
+      auto-rotate
+      shadow-intensity="1"
+      loading="eager"
+    >
+    </model-viewer>
+  </body>
+</html>

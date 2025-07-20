@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Universal 3D Viewer</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="<%= (user && user.theme === 'dark') ? 'dark' : '' %>">
+    <%- include('partials/header') %>
+
+    <main class="container text-center">
+      <h1>Welcome to the Universal 3D Viewer!</h1>
+      <p>Your platform to upload, manage, and showcase 3D models.</p>
+
+      <div class="button-group mt-20">
+        <a href="/gallery" class="button">Browse Gallery</a>
+        <% if (!user) { %>
+        <a href="/login" class="button secondary">Login to Dashboard</a>
+        <% } else { %>
+        <a href="/dashboard" class="button">Go to Dashboard</a>
+        <% } %>
+      </div>
+
+      <section class="features-section mt-20">
+        <h2>Features:</h2>
+        <ul class="features-list">
+          <li>🚀 Fast & Reliable 3D Model Rendering (GLB, GLTF, OBJ, FBX)</li>
+          <li>📦 User Dashboards for Model Management</li>
+          <li>📝 Edit Model Metadata (Name, Tags)</li>
+          <li>🌐 Public Gallery for Live Models with Search/Filter</li>
+          <li>🔐 Secure User Authentication (Password Hashing)</li>
+          <li>✅ Input Validation for Robust Forms</li>
+          <li>🎨 Theme Customization (Light/Dark Mode)</li>
+          <li>⚙️ Easy Setup and Deployment</li>
+        </ul>
+      </section>
+    </main>
+
+    <%- include('partials/footer') %>
+
+    <script src="/js/theme-toggle.js"></script>
+  </body>
+</html>

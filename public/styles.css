@@ -1,0 +1,693 @@
+/* ==================================================================
+   Project Stylesheet (Cleaned & Reorganized)
+   ------------------------------------------------------------------
+   Notes:
+   • Preserves original visual design & tokens.
+   • Deduplicates repeated rules (e.g., mt-20, input width calcs).
+   • Groups related selectors; uses :is() where safe for brevity.
+   • Keeps specificity compatible w/ original markup (body.dark overrides).
+   • Adds a few lightweight CSS custom-prop hooks for spacing.
+   ================================================================== */
+
+/* ------------------------------------------------------------------
+   Design Tokens – Light Theme (default)
+   ------------------------------------------------------------------ */
+:root {
+  /* Colors */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f0f0f0;
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --border-color: #dddddd;
+  --accent-color: #007bff;
+  --button-bg: #007bff;
+  --button-text: #ffffff;
+  --button-hover-bg: #0056b3;
+  --error-color: #dc3545;
+  --success-color: #28a745;
+  --warning-color: #ffc107;
+
+  /* Sizing */
+  --radius-sm: 4px;
+  --radius-md: 5px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+
+  /* Spacing scale */
+  --space-5: 5px;
+  --space-8: 8px;
+  --space-10: 10px;
+  --space-15: 15px;
+  --space-20: 20px;
+  --space-25: 25px;
+  --space-30: 30px;
+
+  /* Typography */
+  --font-family-base: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  --font-size-base: 1em;
+  --font-size-h2: 1.4em; /* used in cards */
+}
+
+/* ------------------------------------------------------------------
+   Dark Theme Overrides (scoped to body.dark)
+   ------------------------------------------------------------------ */
+body.dark {
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #2c2c2c;
+  --text-primary: #f0f0f0;
+  --text-secondary: #cccccc;
+  --border-color: #555555;
+  --accent-color: #66b3ff;
+  --button-bg: #66b3ff;
+  --button-text: #1a1a1a;
+  --button-hover-bg: #4092e0;
+  --error-color: #ff6666;
+  --success-color: #72ec86;
+  --warning-color: #ffe68c;
+}
+
+/* ------------------------------------------------------------------
+   Base / Layout
+   ------------------------------------------------------------------ */
+body {
+  font-family: var(--font-family-base);
+  margin: 0;
+  padding-top: 60px; /* space for fixed header */
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  max-width: 1200px;
+  margin: var(--space-20) auto;
+  padding: 0 var(--space-20);
+  flex-grow: 1;
+}
+
+h1,
+h2,
+h3 {
+  color: var(--text-primary);
+  margin-bottom: var(--space-20);
+}
+
+/* ------------------------------------------------------------------
+   Topbar
+   ------------------------------------------------------------------ */
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  padding: var(--space-10) var(--space-20);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  z-index: 1000;
+}
+
+.topbar .user-info {
+  font-size: 1.1em;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.nav-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 15px;
+}
+
+.nav-links li a {
+  text-decoration: none;
+  color: var(--accent-color);
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.nav-links li a:hover {
+  color: var(--button-hover-bg);
+}
+
+/* ------------------------------------------------------------------
+   Forms (Auth, Model, General)
+   ------------------------------------------------------------------ */
+.auth-form,
+.model-form {
+  background-color: var(--bg-secondary);
+  padding: var(--space-30);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  margin: var(--space-20) auto;
+  border: 1px solid var(--border-color);
+}
+
+.form-group {
+  margin-bottom: var(--space-20);
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: var(--space-8);
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+/* Consolidated textual inputs */
+.form-group
+  :is(
+    input[type="text"],
+    input[type="password"],
+    input[type="email"],
+    textarea,
+    input[type="file"]
+  ) {
+  width: 100%;
+  padding: var(--space-10);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.form-group input[type="checkbox"] {
+  width: auto;
+  margin-right: var(--space-10);
+}
+
+.form-group
+  :is(
+    input[type="text"],
+    input[type="password"],
+    input[type="email"],
+    textarea,
+    input[type="file"]
+  ):focus {
+  border-color: var(--accent-color);
+  outline: none;
+}
+
+/* ------------------------------------------------------------------
+   Buttons
+   ------------------------------------------------------------------ */
+.button,
+button[type="submit"] {
+  display: inline-block;
+  padding: var(--space-10) var(--space-20);
+  border: none;
+  border-radius: var(--radius-md);
+  background-color: var(--button-bg);
+  color: var(--button-text);
+  font-size: var(--font-size-base);
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  text-decoration: none;
+  text-align: center;
+  margin-right: var(--space-10); /* for button groups */
+}
+
+.button:hover,
+button[type="submit"]:hover:not(:disabled) {
+  background-color: var(--button-hover-bg);
+  transform: translateY(-1px);
+}
+
+.button:disabled,
+button[type="submit"]:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+  color: #666666;
+}
+
+.button-group {
+  display: flex;
+  gap: var(--space-10);
+  flex-wrap: wrap;
+}
+
+/* Contextual Buttons */
+.button.delete {
+  background-color: var(--error-color);
+}
+.button.delete:hover {
+  background-color: #c82333;
+}
+
+.button.edit {
+  background-color: var(--success-color);
+}
+.button.edit:hover {
+  background-color: #218838;
+}
+
+.button.secondary {
+  background-color: var(--text-secondary);
+  color: var(--bg-primary);
+}
+.button.secondary:hover {
+  background-color: #5a6268;
+}
+
+.button.reset-button {
+  background-color: var(--warning-color);
+  color: var(--text-primary);
+}
+.button.reset-button:hover {
+  background-color: #e0a800;
+}
+
+/* ------------------------------------------------------------------
+   Messages (Alert-like blocks)
+   ------------------------------------------------------------------ */
+.error-message,
+.success-message {
+  padding: var(--space-10) var(--space-15);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-20);
+  font-weight: bold;
+}
+
+.error-message {
+  background-color: #ffe6e6;
+  color: var(--error-color);
+  border: 1px solid var(--error-color);
+}
+body.dark .error-message {
+  background-color: #4d0000;
+  color: #ff9999;
+  border-color: #ff6666;
+}
+
+.success-message {
+  background-color: #e6ffe6;
+  color: var(--success-color);
+  border: 1px solid var(--success-color);
+}
+body.dark .success-message {
+  background-color: #004d00;
+  color: #99ff99;
+  border-color: #28a745;
+}
+
+/* ------------------------------------------------------------------
+   Dashboard / Model List Table
+   ------------------------------------------------------------------ */
+.model-table-container {
+  overflow-x: auto;
+  background-color: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border-color);
+  padding: var(--space-15);
+}
+
+.model-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: var(--space-10);
+}
+
+.model-table th,
+.model-table td {
+  border: 1px solid var(--border-color);
+  padding: 12px; /* leaving as px for table rhythm */
+  text-align: left;
+  vertical-align: middle;
+}
+
+.model-table th {
+  background-color: var(--accent-color);
+  color: var(--button-text);
+  font-weight: bold;
+}
+
+.model-table tr:nth-child(even) {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+body.dark .model-table tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.model-table .actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
+.model-table .actions .button {
+  padding: 6px 10px;
+  font-size: 0.9em;
+  margin-right: 0; /* override group margin */
+}
+
+.model-table img.thumbnail {
+  width: 100px;
+  height: 75px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+}
+
+/* ------------------------------------------------------------------
+   Pagination Controls
+   ------------------------------------------------------------------ */
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-10);
+  margin-top: var(--space-25);
+  padding-top: var(--space-15);
+  border-top: 1px solid var(--border-color);
+}
+
+.pagination-button {
+  background-color: var(--bg-primary);
+  color: var(--accent-color);
+  border: 1px solid var(--accent-color);
+  padding: 8px 15px;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: background-color 0.2s, color 0.2s;
+}
+.pagination-button:hover {
+  background-color: var(--accent-color);
+  color: var(--button-text);
+}
+.pagination-button.active {
+  background-color: var(--accent-color);
+  color: var(--button-text);
+  font-weight: bold;
+  cursor: default;
+}
+.pagination-button:disabled {
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  border-color: var(--border-color);
+  cursor: not-allowed;
+}
+
+/* ------------------------------------------------------------------
+   Gallery Grid & Controls
+   ------------------------------------------------------------------ */
+.gallery-controls {
+  background-color: var(--bg-secondary);
+  padding: var(--space-20);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-30);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border-color);
+}
+
+.gallery-controls .search-form {
+  display: flex;
+  gap: var(--space-10);
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+.gallery-controls .search-form input[type="text"] {
+  flex: 1;
+  min-width: 180px;
+}
+.gallery-controls .search-form button {
+  flex-shrink: 0;
+}
+
+.model-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-30);
+}
+
+.model-card {
+  background-color: var(--bg-secondary);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease;
+}
+.model-card:hover {
+  transform: translateY(-5px);
+}
+
+.model-card h2 {
+  font-size: var(--font-size-h2);
+  margin: 15px 10px 5px;
+  color: var(--accent-color);
+}
+
+.model-viewer-container {
+  width: 100%;
+  height: 250px; /* fixed for consistency */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--bg-primary);
+}
+
+.model-card model-viewer {
+  width: 100%;
+  height: 100%;
+  border-bottom: 1px solid var(--border-color);
+  --poster-color: var(--bg-primary); /* match background */
+  --progress-bar-color: var(--accent-color);
+}
+
+.model-description,
+.model-tags,
+.model-uploaded-by {
+  font-size: 0.9em;
+  color: var(--text-secondary);
+  margin: 5px 15px;
+  text-align: left;
+}
+.model-tags {
+  font-style: italic;
+}
+
+.model-card .button {
+  margin: var(--space-15);
+  width: calc(100% - 30px);
+  box-sizing: border-box; /* include padding/border */
+}
+
+/* ------------------------------------------------------------------
+   Viewer Page
+   ------------------------------------------------------------------ */
+.viewer-container {
+  max-width: 900px; /* adjust as needed */
+  width: 100%;
+  height: 600px; /* or flexible height w/ aspect-ratio */
+  margin: var(--space-20) auto;
+  background-color: var(--bg-secondary);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid var(--border-color);
+}
+
+#isolated-model-viewer,
+.viewer-container model-viewer {
+  width: 100%;
+  height: 100%;
+  --poster-color: transparent;
+  --progress-bar-color: var(--accent-color);
+}
+
+/* ------------------------------------------------------------------
+   Footer
+   ------------------------------------------------------------------ */
+footer {
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  text-align: center;
+  padding: var(--space-20);
+  border-top: 1px solid var(--border-color);
+  margin-top: auto; /* push footer to bottom */
+}
+
+/* ------------------------------------------------------------------
+   Utility Classes
+   ------------------------------------------------------------------ */
+.text-center {
+  text-align: center;
+}
+
+.mt-10 {
+  margin-top: 10px;
+}
+.mt-20 {
+  margin-top: 20px;
+}
+.mb-20 {
+  margin-bottom: 20px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Theme toggle button */
+.theme-toggle-btn {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  font-size: 1.2em;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+.theme-toggle-btn:hover {
+  background-color: var(--border-color);
+}
+body.dark .theme-toggle-btn:hover {
+  background-color: #3d3d3d;
+}
+
+/* ------------------------------------------------------------------
+   Error Page
+   ------------------------------------------------------------------ */
+.error-page {
+  text-align: center;
+  padding: 50px;
+}
+.error-page h1 {
+  font-size: 3em;
+  color: var(--error-color);
+}
+.error-page p {
+  font-size: 1.2em;
+  color: var(--text-secondary);
+}
+.error-page .button {
+  margin-top: 30px;
+}
+
+/* ------------------------------------------------------------------
+   Responsive Breakpoints
+   ------------------------------------------------------------------ */
+@media (max-width: 768px) {
+  .topbar {
+    flex-direction: column;
+    padding: var(--space-10);
+    height: auto;
+    gap: var(--space-10);
+  }
+  .nav-links {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  body {
+    padding-top: 120px; /* taller header on mobile */
+  }
+
+  .form-group :is(input[type="text"], input[type="password"], textarea) {
+    width: 100%;
+  }
+  .model-table th,
+  .model-table td {
+    padding: var(--space-8);
+    font-size: 0.9em;
+  }
+  .model-table .actions .button {
+    padding: 4px 8px;
+    font-size: 0.8em;
+  }
+  .gallery-controls .search-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .gallery-controls .search-form :is(input, button) {
+    width: 100%;
+    margin-bottom: var(--space-10);
+  }
+  .gallery-controls .search-form button:last-child {
+    margin-bottom: 0;
+  }
+}
+
+/* ------------------------------------------------------------------
+   Admin Page Layout
+   ------------------------------------------------------------------ */
+.admin-grid {
+  display: grid;
+  grid-template-columns: 1fr; /* default single column */
+  gap: var(--space-30);
+  margin-top: var(--space-20);
+}
+
+@media (min-width: 992px) {
+  .admin-grid {
+    grid-template-columns: 2fr 1fr; /* wide list + preview */
+  }
+}
+
+.admin-left-col,
+.admin-right-col {
+  background-color: var(--bg-secondary);
+  padding: var(--space-30);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-color);
+}
+
+.model-preview-section model-viewer {
+  width: 100%;
+  height: 300px; /* adjust as needed */
+  margin-top: var(--space-15);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+.inline-form {
+  display: inline-block;
+}
+
+/* ------------------------------------------------------------------
+   Features Section (index.ejs)
+   ------------------------------------------------------------------ */
+.features-section {
+  background-color: var(--bg-secondary);
+  padding: var(--space-30);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-color);
+}
+
+.features-list {
+  list-style: none;
+  padding: 0;
+  display: inline-block; /* centers if parent text-align:center */
+  text-align: left;
+  margin: 0 auto;
+}
+
+.features-list li {
+  margin-bottom: var(--space-10);
+  font-size: 1.1em;
+  color: var(--text-primary);
+}
