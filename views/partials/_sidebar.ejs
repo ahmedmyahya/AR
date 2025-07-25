@@ -1,0 +1,87 @@
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <i class="fas fa-cube icon"></i>
+        <h1><%= title %></h1>
+        <button class="close-sidebar-btn" id="closeSidebarBtn">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    <nav class="sidebar-nav">
+        <ul>
+            <li class="user-menu-item">
+                <a href="#" id="userMenuToggle" class="<%= currentPage === 'userMenu' ? 'active' : '' %>">
+                    <i class="fas fa-user-circle nav-icon"></i>
+                    <span>Welcome, <%= username %>!</span>
+                    <i class="fas fa-chevron-down ml-auto user-menu-arrow"></i>
+                </a>
+                <ul id="userSubMenu" class="user-submenu">
+                    <li>
+                        <a href="/logout">
+                            <i class="fas fa-sign-out-alt nav-icon"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <li>
+                <!-- Dashboard link - always visible -->
+                <a href="/dashboard"
+                    class="filter-nav-link <%= currentPage === 'allModels' ? 'active-nav-filter' : '' %>"
+                    data-filter="all">
+                    <i class="fas fa-upload nav-icon"></i>
+                    <span>Uploaded Model(s)</span>
+                    <% if (currentPage !=='upload' ) { %>
+                        <strong>
+                            <%= totalModels %>
+                        </strong>
+                        <% } %>
+                </a>
+            </li>
+
+            <% if (currentPage !=='upload' ) { %>
+                <li class="nav-category">Models Overview</li>
+
+                <% // These variables are now directly available without 'locals.' or '|| 0' %>
+
+                    <li>
+                        <!-- Link to the published models dashboard route -->
+                        <a href="/dashboard/published"
+                            class="filter-nav-link <%= currentPage === 'published' ? 'active-nav-filter' : '' %>"
+                            data-filter="deployed">
+                            <i class="fas fa-globe nav-icon"></i>
+                            <span>Published</span>
+                            <strong>
+                                <%= publishedModels %>
+                            </strong>
+                        </a>
+                    </li>
+
+                    <li>
+                        <!-- Link to the drafts dashboard route -->
+                        <a href="/dashboard/drafts"
+                            class="filter-nav-link <%= currentPage === 'drafts' ? 'active-nav-filter' : '' %>"
+                            data-filter="draft">
+                            <i class="fas fa-pencil-ruler nav-icon"></i>
+                            <span>Drafts</span>
+                            <strong>
+                                <%= draftModels %>
+                            </strong>
+                        </a>
+                    </li>
+                    <% } %>
+                        <% // End of conditional block for "Models Overview" filters %>
+
+                            <% if (currentPage !=='upload' ) { %>
+                                <li class="nav-category">Other Actions</li>
+                                <li>
+                                    <a href="/upload">
+                                        <i class="fas fa-plus-circle nav-icon"></i>
+                                        <span>Upload</span>
+                                    </a>
+                                </li>
+                                <% } %>
+                                    <!-- You can add more links here under "Other Actions" -->
+
+        </ul>
+    </nav>
+</aside>

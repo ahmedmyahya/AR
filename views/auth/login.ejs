@@ -1,0 +1,36 @@
+<main class="main-content login-page" id="mainContent">
+    <div class="form-container">
+        <h2 style="text-align: center;">Login</h2>
+
+        <% if (error) { %>
+            <div class="message error">
+                <%= error %>
+            </div>
+            <% } %>
+                <% if (success) { %>
+                    <div class="message success">
+                        <%= success %>
+                    </div>
+                    <% } %>
+
+                        <form action="/login" method="POST" class="upload-form">
+                            <div class="form-group">
+                                <label for="username">Username:</label>
+                                <input type="text" id="username" name="username" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="password">Password:</label>
+                                <input type="password" id="password" name="password" required>
+                            </div>
+
+                            <div class="form-group button-wrapper">
+                                <button type="submit" class="submit-button">Login</button>
+                            </div>
+                        </form>
+
+                        <p style="text-align: center; margin-top: 1rem;">
+                            Don't have an account? <a href="/register">Register here</a>.
+                        </p>
+    </div>
+</main>

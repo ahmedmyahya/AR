@@ -1,0 +1,246 @@
+<!-- Model Viewer Scripts -->
+<script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+<script nomodule src="https://unpkg.com/@google/model-viewer/dist/model-viewer-legacy.js"></script>
+
+<script>
+    // Global functions (can be called directly from HTML)
+    function copyLink(elementId) {
+        const copyText = document.getElementById(elementId);
+        copyText.select();
+        copyText.setSelectionRange(0, 99999); // Mobile support
+        document.execCommand('copy');
+        console.log('Copied the content!');
+    }
+
+    function openIframeModal(hostingLink, modelFilePath, modelName) {
+        const modal = document.getElementById('iframeModal');
+        const modalModelViewer = document.getElementById('modalModelViewer');
+        const iframeEmbedCode = document.getElementById('iframeEmbedCode');
+        const modalTitle = document.getElementById('modalTitle');
+
+        modalModelViewer.src = `/uploads/${modelFilePath}`;
+        modalModelViewer.alt = `${modelName} 3D model`;
+        iframeEmbedCode.value = `<iframe src="${hostingLink}" width="600" height="400" frameborder="0" allowfullscreen></iframe>`;
+        modalTitle.textContent = `${modelName} Embed Code`;
+
+        modal.classList.add('is-visible');
+    }
+
+    function closeIframeModal() {
+        const modal = document.getElementById('iframeModal');
+        modal.classList.remove('is-visible');
+
+        setTimeout(() => {
+            document.getElementById('modalModelViewer').src = '';
+            document.getElementById('modalModelViewer').alt = '';
+            document.getElementById('iframeEmbedCode').value = '';
+        }, 300);
+    }
+
+    // All other interactive JavaScript logic
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- Deploy/Draft Toggle ---
+        document.querySelector('.models-grid')?.addEventListener('click', async (event) => {
+            const button = event.target;
+
+            if (button.classList.contains('deploy') || button.classList.contains('set-draft')) {
+                const modelId = button.dataset.modelId;
+                const currentStatus = button.dataset.currentStatus;
+                const newStatus = currentStatus === 'draft' ? 'deployed' : 'draft';
+                const modelCard = button.closest('.model-card');
+                const statusBadge = modelCard.querySelector('.status-badge');
+
+                console.log(`Confirm: Are you sure you want to set this model to '${newStatus}' status?`);
+                const userConfirmed = true; // Replace with result from your custom modal
+                if (!userConfirmed) return;
+
+                try {
+                    const response = await fetch(`/api/models/${modelId}/status`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ status: newStatus }),
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        console.log(data.message);
+                        statusBadge.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+                        statusBadge.classList.replace(currentStatus, newStatus);
+                        modelCard.dataset.status = newStatus;
+
+                        button.dataset.currentStatus = newStatus;
+                        button.textContent = newStatus === 'deployed' ? 'Set Draft' : 'Deploy';
+                        button.classList.toggle('deploy');
+                        button.classList.toggle('set-draft');
+
+                        // Only update sidebar counts client-side when a model's status changes
+                        // This call is fine here because it's on a dashboard page where elements exist.
+                        updateSidebarCounts();
+
+                        const activeFilterLink = document.querySelector('.filter-nav-link.active-nav-filter');
+                        if (activeFilterLink) {
+                            applyFilter(activeFilterLink.dataset.filter);
+                        } else {
+                            applyFilter('all');
+                        }
+
+                    } else {
+                        console.error(`Error: ${data.message || 'Failed to update status.'}`);
+                    }
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                    console.error('An error occurred while communicating with the server.');
+                }
+            }
+        });
+
+        // --- User Menu Toggle ---
+        const userMenuToggle = document.getElementById('userMenuToggle');
+        const userSubMenu = document.getElementById('userSubMenu');
+        const userMenuArrow = userMenuToggle?.querySelector('.user-menu-arrow');
+        const userMenuItem = document.querySelector('.user-menu-item');
+
+        function deactivateFilterLinks() {
+            document.querySelectorAll('.filter-nav-link').forEach(link => link.classList.remove('active-nav-filter'));
+        }
+
+        function deactivateUserMenu() {
+            if (userMenuItem) userMenuItem.classList.remove('active-user-block');
+            if (userSubMenu) userSubMenu.classList.remove('is-expanded');
+            if (userMenuArrow) {
+                userMenuArrow.classList.remove('fa-chevron-up');
+                userMenuArrow.classList.add('fa-chevron-down');
+            }
+        }
+
+        if (userMenuToggle && userSubMenu && userMenuItem) {
+            userMenuToggle.addEventListener('click', (event) => {
+                event.preventDefault();
+
+                if (userMenuItem.classList.contains('active-user-block')) {
+                    deactivateUserMenu();
+                    const allFilter = document.querySelector('.filter-nav-link[href="/dashboard"]');
+                    allFilter?.classList.add('active-nav-filter');
+                    applyFilter('all');
+                } else {
+                    deactivateFilterLinks();
+                    userMenuItem.classList.add('active-user-block');
+                    userSubMenu.classList.add('is-expanded');
+                    if (userMenuArrow) userMenuArrow.classList.replace('fa-chevron-down', 'fa-chevron-up');
+                }
+            });
+
+            document.addEventListener('click', (event) => {
+                if (userMenuItem && !userMenuItem.contains(event.target) && userSubMenu && !userSubMenu.contains(event.target)) {
+                    deactivateUserMenu();
+                    if (!document.querySelector('.filter-nav-link.active-nav-filter')) {
+                        const allFilter = document.querySelector('.filter-nav-link[href="/dashboard"]');
+                        allFilter?.classList.add('active-nav-filter');
+                        applyFilter('all');
+                    }
+                }
+            });
+        }
+
+        // --- Burger Menu (Mobile Sidebar Toggle) ---
+        const burgerMenuBtn = document.getElementById('burgerMenuBtn');
+        const sidebar = document.getElementById('sidebar');
+        const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+        const mainContent = document.getElementById('mainContent');
+
+        if (burgerMenuBtn && sidebar && closeSidebarBtn && mainContent) {
+            burgerMenuBtn.addEventListener('click', () => {
+                sidebar.classList.add('is-open');
+                mainContent.classList.add('sidebar-open');
+            });
+
+            closeSidebarBtn.addEventListener('click', () => {
+                sidebar.classList.remove('is-open');
+                mainContent.classList.remove('sidebar-open');
+            });
+
+            mainContent.addEventListener('click', (event) => {
+                if (
+                    sidebar.classList.contains('is-open') &&
+                    !sidebar.contains(event.target) &&
+                    !burgerMenuBtn.contains(event.target)
+                ) {
+                    sidebar.classList.remove('is-open');
+                    mainContent.classList.remove('sidebar-open');
+                }
+            });
+        }
+
+        // --- Filtering Logic (Client-side) ---
+        const modelCards = document.querySelectorAll('.models-grid .model-card');
+
+        function applyFilter(filter) {
+            modelCards.forEach(card => {
+                const status = card.dataset.status;
+                card.classList.toggle('hidden', filter !== 'all' && status !== filter);
+            });
+        }
+
+        document.querySelectorAll('.filter-nav-link').forEach(link => {
+            link.addEventListener('click', (event) => {
+                if (link.getAttribute('href') === '#') {
+                    event.preventDefault();
+                    applyFilter(link.dataset.filter);
+                }
+
+                deactivateUserMenu();
+                deactivateFilterLinks();
+                link.classList.add('active-nav-filter');
+            });
+        });
+
+        // --- Sidebar Counts Update ---
+        function updateSidebarCounts() {
+            // These queries will only find elements if they are present in the DOM.
+            // On the upload page, the strong tags for counts are conditionally hidden by EJS,
+            // so these selectors will return null, which is handled by the 'if' checks below.
+            const totalModelsStrong = document.querySelector('.filter-nav-link[data-filter="all"] strong');
+            const publishedModelsStrong = document.querySelector('.filter-nav-link[data-filter="deployed"] strong');
+            const draftModelsStrong = document.querySelector('.filter-nav-link[data-filter="draft"] strong');
+
+            // Only attempt to update textContent if the element exists
+            if (totalModelsStrong) totalModelsStrong.textContent = document.querySelectorAll('.models-grid .model-card').length;
+            if (publishedModelsStrong) publishedModelsStrong.textContent = [...document.querySelectorAll('.models-grid .model-card')].filter(c => c.dataset.status === 'deployed').length;
+            if (draftModelsStrong) draftModelsStrong.textContent = [...document.querySelectorAll('.models-grid .model-card')].filter(c => c.dataset.status === 'draft').length;
+        }
+
+        // --- Initial Setup on Page Load ---
+        const path = window.location.pathname;
+        let initialActiveFilterData = 'all';
+
+        if (path.includes('/dashboard/published')) {
+            initialActiveFilterData = 'deployed';
+        } else if (path.includes('/dashboard/drafts')) {
+            initialActiveFilterData = 'draft';
+        } else if (path.includes('/dashboard')) {
+            initialActiveFilterData = 'all';
+        }
+
+        const activeLinkOnLoad = document.querySelector(`.filter-nav-link[data-filter="${initialActiveFilterData}"]`);
+        if (activeLinkOnLoad) {
+            activeLinkOnLoad.classList.add('active-nav-filter');
+            if (path.includes('/dashboard')) {
+                applyFilter(initialActiveFilterData);
+            }
+        } else if (path === '/dashboard') {
+            document.querySelector('.filter-nav-link[data-filter="all"]')?.classList.add('active-nav-filter');
+            applyFilter('all');
+        }
+
+        deactivateUserMenu();
+
+        // IMPORTANT: Only call updateSidebarCounts on initial load if we are on a dashboard page.
+        // On the upload page, the counts are managed by EJS and are hidden.
+        if (path.includes('/dashboard')) {
+            updateSidebarCounts();
+        }
+    });
+</script>

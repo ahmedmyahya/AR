@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+    <script nomodule src="https://unpkg.com/@google/model-viewer/dist/model-viewer-legacy.js"></script>
+</head>
+
+<body>
+    <div class="dashboard-layout">
+        <%- include('../partials/_sidebar', { username: username, totalModels: totalModels, publishedModels:
+            publishedModels, draftModels: draftModels, currentPage: currentPage, title: title }) %>
+            <main class="main-content" id="mainContent">
+                <header class="main-content-header">
+                    <button class="burger-menu-btn" id="burgerMenuBtn">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </header>
+
+                <div class="form-container">
+                    <% if (error && error.length> 0) { %>
+                        <div class="message error">
+                            <%= error %>
+                        </div>
+                        <% } %>
+                            <% if (success && success.length> 0) { %>
+                                <div class="message success">
+                                    <%= success %>
+                                </div>
+                                <% } %>
+
+                                    <form action="/upload" method="POST" enctype="multipart/form-data"
+                                        class="upload-form">
+                                        <div class="form-group">
+                                            <label for="modelName">Model Name:</label>
+                                            <input type="text" id="modelName" name="modelName">
+                                            <small id="modelNameHelpText">
+                                                Required for single file uploads. For multiple uploads, subsequent
+                                                models will use their filename as a default name.
+                                            </small>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="description">Description (Optional):</label>
+                                            <textarea id="description" name="description" rows="4"></textarea>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="tags">Tags (comma-separated, e.g., "animal, nature,
+                                                sculpture"):</label>
+                                            <input type="text" id="tags" name="tags"
+                                                placeholder="e.g., car, vehicle, future">
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="modelFile">Select 3D Model(s) (GLB/GLTF):</label>
+                                            <div id="dropArea" class="drop-area">
+                                                <input type="file" id="modelFile" name="modelFile" accept=".glb, .gltf"
+                                                    multiple required style="display: none;">
+                                                <p>Drag & Drop your 3D model(s) here, or</p>
+                                                <button type="button" class="choose-file-button">Choose File(s)</button>
+                                                <small>Max file size: 50MB per file</small>
+                                            </div>
+                                            <div id="fileNameDisplay" class="file-name-display"></div>
+                                        </div>
+
+                                        <div id="modelPreviewsContainer" class="model-previews-container"
+                                            style="display: none;">
+                                            <label>Model Previews:</label>
+                                            <div id="modelPreviewGrid" class="model-preview-grid">
+                                            </div>
+                                            <button type="button" id="clearPreviewsButton"
+                                                class="clear-preview-button">Clear All Previews</button>
+                                        </div>
+
+                                        <button type="submit" class="submit-button">Upload Model(s)</button>
+                                    </form>
+                </div>
+            </main>
+    </div>
+
+    <%- include('../partials/_iframeModal') %>
+        <%- include('../partials/_scripts') %>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    const dropArea = document.getElementById('dropArea');
+                    const modelFileInput = document.getElementById('modelFile');
+                    const chooseFileButton = document.querySelector('.choose-file-button');
+                    const modelPreviewsContainer = document.getElementById('modelPreviewsContainer');
+                    const modelPreviewGrid = document.getElementById('modelPreviewGrid');
+                    const clearPreviewsButton = document.getElementById('clearPreviewsButton');
+                    const fileNameDisplay = document.getElementById('fileNameDisplay');
+                    const modelNameInput = document.getElementById('modelName');
+                    const modelNameHelpText = document.getElementById('modelNameHelpText');
+
+                    let selectedFiles = []; // Array to hold files for submission
+
+                    function updateModelNameRequirement() {
+                        if (selectedFiles.length === 1) {
+                            modelNameInput.setAttribute('required', 'required');
+                            modelNameHelpText.textContent = 'Required for single file uploads.';
+                        } else {
+                            modelNameInput.removeAttribute('required');
+                            modelNameHelpText.textContent = 'For multiple uploads, subsequent models will use their filename as a default name.';
+                        }
+                    }
+
+                    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                        dropArea.addEventListener(eventName, preventDefaults, false);
+                        document.body.addEventListener(eventName, preventDefaults, false);
+                    });
+
+                    function preventDefaults(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+
+                    ['dragenter', 'dragover'].forEach(eventName => {
+                        dropArea.addEventListener(eventName, () => dropArea.classList.add('highlight'), false);
+                    });
+
+                    ['dragleave', 'drop'].forEach(eventName => {
+                        dropArea.addEventListener(eventName, () => dropArea.classList.remove('highlight'), false);
+                    });
+
+                    dropArea.addEventListener('drop', handleDrop, false);
+
+                    function handleDrop(e) {
+                        const dt = e.dataTransfer;
+                        const files = dt.files;
+                        addFiles(files);
+                    }
+
+                    chooseFileButton.addEventListener('click', () => {
+                        modelFileInput.click();
+                    });
+
+                    // Listen for changes on the hidden file input
+                    modelFileInput.addEventListener('change', (e) => {
+                        addFiles(e.target.files);
+                    });
+
+                    function addFiles(files) {
+                        const validExtensions = ['.glb', '.gltf'];
+                        let newFilesAdded = false;
+
+                        Array.from(files).forEach(file => {
+                            const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+
+                            if (!validExtensions.includes(fileExtension)) {
+                                console.warn(`File "${file.name}" is not a valid 3D model file (.glb or .gltf) and will be skipped.`);
+                                return;
+                            }
+
+                            if (file.size > 50 * 1024 * 1024) {
+                                console.warn(`File "${file.name}" exceeds 50MB and will be skipped.`);
+                                return;
+                            }
+
+                            const isDuplicate = selectedFiles.some(existingFile =>
+                                existingFile.name === file.name && existingFile.size === file.size && existingFile.lastModified === file.lastModified
+                            );
+
+                            if (!isDuplicate) {
+                                selectedFiles.push(file);
+                                newFilesAdded = true;
+                            }
+                        });
+
+                        if (newFilesAdded) {
+                            updateFileDisplayAndPreviews();
+                        }
+                        updateModelNameRequirement();
+                    }
+
+                    function updateFileDisplayAndPreviews() {
+                        fileNameDisplay.innerHTML = '';
+                        modelPreviewGrid.innerHTML = '';
+
+                        if (selectedFiles.length === 0) {
+                            modelPreviewsContainer.style.display = 'none';
+                            modelNameInput.value = '';
+                            modelNameInput.removeAttribute('required');
+                            modelNameHelpText.textContent = 'Required for single file uploads. For multiple uploads, subsequent models will use their filename as a default name.';
+                            return;
+                        }
+
+                        modelPreviewsContainer.style.display = 'block';
+                        fileNameDisplay.innerHTML = `<strong>Selected Files (${selectedFiles.length}):</strong><br>`;
+
+                        selectedFiles.forEach((file, index) => {
+                            const fileEntry = document.createElement('span');
+                            fileEntry.textContent = file.name;
+                            fileEntry.classList.add('file-entry-pill');
+
+                            const removeButton = document.createElement('button');
+                            removeButton.textContent = 'x';
+                            removeButton.classList.add('remove-file-button');
+                            removeButton.onclick = (e) => {
+                                e.stopPropagation();
+                                removeFile(index);
+                            };
+                            fileEntry.appendChild(removeButton);
+                            fileNameDisplay.appendChild(fileEntry);
+
+                            const viewerWrapper = document.createElement('div');
+                            viewerWrapper.classList.add('model-viewer-wrapper');
+
+                            const modelViewer = document.createElement('model-viewer');
+                            modelViewer.setAttribute('camera-controls', '');
+                            modelViewer.setAttribute('touch-action', 'pan-y');
+                            modelViewer.setAttribute('alt', `3D model preview of ${file.name}`);
+                            modelViewer.setAttribute('shadow-intensity', '1');
+                            modelViewer.setAttribute('ar', '');
+                            modelViewer.setAttribute('ar-modes', 'webxr scene-viewer quick-look');
+                            modelViewer.setAttribute('environment-image', 'neutral');
+                            modelViewer.setAttribute('auto-rotate', '');
+
+                            const reader = new FileReader();
+                            reader.onload = (e) => {
+                                modelViewer.src = e.target.result;
+                            };
+                            reader.readAsDataURL(file);
+
+                            viewerWrapper.appendChild(modelViewer);
+                            modelPreviewGrid.appendChild(viewerWrapper);
+                        });
+                        updateModelNameRequirement();
+                    }
+
+                    function removeFile(indexToRemove) {
+                        selectedFiles.splice(indexToRemove, 1);
+                        updateFileDisplayAndPreviews();
+                        if (selectedFiles.length === 0) {
+                            modelFileInput.value = '';
+                        }
+                        updateModelNameRequirement();
+                    }
+
+                    clearPreviewsButton.addEventListener('click', clearAllPreviews);
+
+                    function clearAllPreviews() {
+                        selectedFiles = [];
+                        modelFileInput.value = '';
+                        fileNameDisplay.innerHTML = '';
+                        modelPreviewGrid.innerHTML = '';
+                        modelPreviewsContainer.style.display = 'none';
+                        modelNameInput.value = '';
+                        updateModelNameRequirement();
+                    }
+
+                    document.querySelector('.upload-form').addEventListener('submit', function (e) {
+                        console.log('Form submission initiated.');
+
+                        // IMPORTANT: Create a new FileList object from selectedFiles
+                        // and assign it to the file input's files property.
+                        // This is the most reliable way to ensure Multer receives the files.
+                        const dataTransfer = new DataTransfer();
+                        selectedFiles.forEach(file => dataTransfer.items.add(file));
+                        modelFileInput.files = dataTransfer.files;
+
+                        console.log('Selected files count (internal array):', selectedFiles.length);
+                        console.log('modelFileInput.files count (for submission):', modelFileInput.files.length);
+
+                        if (selectedFiles.length === 0) {
+                            console.error('Validation Error: Please select at least one 3D model file to upload.');
+                            e.preventDefault(); // Stop form submission
+                            return;
+                        }
+
+                        // Client-side check for modelName if single file upload
+                        if (selectedFiles.length === 1 && (!modelNameInput.value || modelNameInput.value.trim() === '')) {
+                            console.error('Validation Error: Model name is required for single file uploads.');
+                            modelNameInput.focus();
+                            e.preventDefault(); // Stop form submission
+                            return;
+                        }
+
+                        console.log('Client-side validation passed. Form should submit.');
+                        // If all checks pass, the form will proceed with submission normally.
+                        // No e.preventDefault() here means it will submit.
+                    });
+
+                    updateModelNameRequirement();
+                });
+            </script>
+
+</body>
+
+</html>

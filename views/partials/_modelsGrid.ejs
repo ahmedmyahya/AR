@@ -1,0 +1,16 @@
+<% // Expecting 'models' array to be passed to this partial const models=locals.models || []; %>
+
+    <% if (models.length===0) { %>
+        <p class="no-models-message" style="color: #6b7280; text-align: center; padding: 2rem;">
+            You haven't uploaded any models yet.
+            <a href="/upload" style="color: #6d28d9; text-decoration: underline;">
+                Upload your first model!
+            </a>
+        </p>
+        <% } else { %>
+            <div class="models-grid">
+                <% models.forEach(function (model) { %>
+                    <%- include('./_modelCard', { model: model }) %>
+                        <% }); %>
+            </div>
+            <% } %>

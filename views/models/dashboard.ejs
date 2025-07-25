@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+    <script nomodule src="https://unpkg.com/@google/model-viewer/dist/model-viewer-legacy.js"></script>
+</head>
+
+<body>
+    <div class="dashboard-layout">
+        <%- include('../partials/_sidebar', { username: username, totalModels: totalModels, publishedModels:
+            publishedModels, draftModels: draftModels, currentPage: currentPage, title: title }) %>
+
+            <main class="main-content" id="mainContent">
+                <header class="main-content-header">
+                    <button class="burger-menu-btn" id="burgerMenuBtn">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </header>
+
+                <div class="dashboard-content">
+                    <% if (error && error.length> 0) { %>
+                        <div class="message error">
+                            <%= error %>
+                        </div>
+                        <% } %>
+                            <% if (success && success.length> 0) { %>
+                                <div class="message success">
+                                    <%= success %>
+                                </div>
+                                <% } %>
+
+                                    <div class="models-grid">
+                                        <% if (models && models.length> 0) { %>
+                                            <% models.forEach(model=> { %>
+                                                <div class="model-card" data-status="<%= model.status %>"
+                                                    data-model-id="<%= model.id %>">
+                                                    <model-viewer src="/uploads/<%= model.filePath.split('/').pop() %>"
+                                                        alt="<%= model.modelName %> 3D model" shadow-intensity="1"
+                                                        camera-controls auto-rotate>
+                                                    </model-viewer>
+                                                    <div class="model-info">
+                                                        <div class="model-name">
+                                                            <%= model.modelName %>
+                                                        </div>
+                                                        <div class="tag-list">
+                                                            <% if (model.tags && model.tags.length> 0) { %>
+                                                                <% model.tags.split(',').forEach(tag=> { %>
+                                                                    <span class="tag-pill">
+                                                                        <%= tag.trim() %>
+                                                                    </span>
+                                                                    <% }) %>
+                                                                        <% } else { %>
+                                                                            <span class="no-tags">No tags</span>
+                                                                            <% } %>
+                                                        </div>
+                                                        <span class="status-badge <%= model.status %>">
+                                                            <%= model.status.charAt(0).toUpperCase() +
+                                                                model.status.slice(1) %>
+                                                        </span>
+                                                    </div>
+                                                    <div class="card-actions-overlay">
+                                                        <button class="action-button view"
+                                                            onclick="openIframeModal('<%= model.hostingLink %>', '<%= model.filePath.split('/').pop() %>', '<%= model.modelName %>')">View
+                                                            & Embed</button>
+                                                        <button
+                                                            class="action-button <%= model.status === 'deployed' ? 'set-draft' : 'deploy' %>"
+                                                            data-model-id="<%= model.id %>"
+                                                            data-current-status="<%= model.status %>">
+                                                            <%= model.status==='deployed' ? 'Set Draft' : 'Deploy' %>
+                                                        </button>
+                                                        <form action="/api/models/<%= model.id %>?_method=DELETE"
+                                                            method="POST"
+                                                            onsubmit="return confirm('Are you sure you want to delete <%= model.modelName %>?');">
+                                                            <button type="submit"
+                                                                class="action-button delete">Delete</button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                                <% }) %>
+                                                    <% } else { %>
+                                                        <p class="no-models-message">No models found for this filter.
+                                                            Upload some models!</p>
+                                                        <% } %>
+                                    </div>
+                </div>
+            </main>
+    </div>
+
+    <%- include('../partials/_iframeModal') %>
+        <%- include('../partials/_scripts') %>
+
+</body>
+
+</html>

@@ -1,0 +1,22 @@
+<div id="iframeModal" class="modal">
+    <div class="modal-content">
+        <h3 id="modalTitle" class="modal-title">Model Embed Code</h3>
+
+        <div class="modal-iframe-wrapper">
+            <model-viewer id="modalModelViewer" src="" camera-controls shadow-intensity="1" alt="" auto-rotate autoplay
+                class="modal-iframe"></model-viewer>
+        </div>
+
+        <label for="iframeEmbedCode" class="modal-label">
+            Copy Iframe Embed Code:
+        </label>
+        <textarea id="iframeEmbedCode" rows="4" class="modal-textarea" readonly onclick="this.select()"></textarea>
+
+        <button class="modal-button copy" onclick="copyLink('iframeEmbedCode')">
+            Copy Embed Code
+        </button>
+        <button class="modal-button close" onclick="closeIframeModal()">
+            Close
+        </button>
+    </div>
+</div>

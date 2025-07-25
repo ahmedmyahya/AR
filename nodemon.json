@@ -1,11 +1,9 @@
 {
-    "ignore": [
-        "models.json",
-        "users.json",
-        "sessions/",
-        "public/uploads/",
-        "public/uploads/*/thumbnails/",
-        ".env",
-        "database/data/*.sqlite"
-    ]
+  "watch": ["."],
+  "ext": "js,mjs,cjs,json,ejs,css",
+  "ignore": [
+    "sessions/",
+    "data/",
+    "uploads/"
+  ]
 }
